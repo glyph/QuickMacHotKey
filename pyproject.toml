@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.package-data]
+"*" = ["py.typed"]
+
+[project]
+name = "quickmachotkey"
+description = "Bind a global hotkey, on macOS, in Python"
+readme = "README.rst"
+version = "2023.03.03"
+dependencies = [
+    "pyobjc-core",
+]
