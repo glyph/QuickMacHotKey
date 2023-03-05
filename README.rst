@@ -25,5 +25,6 @@ Simple example:
    if __name__ == "__main__":
        from AppKit import NSApplication  # type:ignore[import]
        from PyObjCTools import AppHelper  # type:ignore[import]
+       print("type ⌘⌃⌥X with any application focused")
        NSApplication.sharedApplication()
        AppHelper.runEventLoop()
