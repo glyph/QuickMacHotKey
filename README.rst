@@ -16,7 +16,7 @@ Simple example:
    python
 
    from quickmachotkey import quickHotKey, mask
-   from quickmachotkey.constants import kVK_ANSI_X, cmdKey, controlkey, optionKey
+   from quickmachotkey.constants import kVK_ANSI_X, cmdKey, controlKey, optionKey
 
    @quickHotKey(virtualKey=kVK_ANSI_X, modifierMask=mask(cmdKey, controlKey, optionKey))
    def handler() -> None:
