@@ -4,7 +4,7 @@ The only documentation of this functionality is to be found in
 /System/Library/Frameworks/Carbon.framework/Versions/A/Frameworks/HIToolbox.framework/Versions/A/Headers/Events.h
 """
 
-import objc as _objc            # type:ignore[import]
+import objc as _objc  # type:ignore[import]
 from warnings import catch_warnings as _catch
 
 with _catch():
@@ -24,3 +24,20 @@ with _catch():
         ),
         globals=globals(),
     )
+
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+
+    def whatever(*args: Any, **kwargs: Any) -> Any:
+        ...
+
+    EventTypeSpec = (
+        GetEventDispatcherTarget
+    ) = (
+        InstallEventHandler
+    ) = (
+        RegisterEventHotKey
+    ) = (
+        RemoveEventHandler
+    ) = UnregisterEventHotKey = kEventClassKeyboard = kEventHotKeyPressed = whatever
