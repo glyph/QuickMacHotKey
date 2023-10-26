@@ -28,3 +28,6 @@ version = "2023.03.04"
 dependencies = [
     "pyobjc-core",
 ]
+
+[project.urls]
+"Source Code" = "https://github.com/glyph/QuickMacHotKey"
