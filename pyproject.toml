@@ -8,6 +8,18 @@ build-backend = "setuptools.build_meta"
     "PyObjC.bridgesupport",
 ]
 
+[[tool.mypy.overrides]]
+module = "objc.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "AppKit.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "PyObjCTools.*"
+ignore_missing_imports = true
+
 [project]
 name = "quickmachotkey"
 description = "Bind a global hotkey, on macOS, in Python"
