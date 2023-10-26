@@ -3,9 +3,12 @@ ModernHotKey.py
 
 An example that shows how to use "Carbon" HotKeys from a PyObjC application.
 """
-import objc  # type:ignore[import]
+from traceback import print_exc
+from typing import Callable, Protocol, overload
 
-from ._MinimalHIToolbox import (  # type:ignore[attr-defined]
+import objc
+
+from ._MinimalHIToolbox import (
     EventTypeSpec,
     GetEventDispatcherTarget,
     InstallEventHandler,
@@ -15,10 +18,7 @@ from ._MinimalHIToolbox import (  # type:ignore[attr-defined]
     kEventClassKeyboard,
     kEventHotKeyPressed,
 )
-
-from .constants import VirtualKey, ModifierKey
-
-from typing import TypeVar, Callable, Protocol
+from .constants import ModifierKey, VirtualKey
 
 CB = Callable[[], None]
 
@@ -43,6 +43,20 @@ class Registerable(Protocol):
         Run the function.
         """
 
+
+class Configurable(Registerable, Protocol):
+    """
+    A L{Configurable} is a L{Registerable} which can also be configured by the
+    user.
+    """
+
+    def configure(self, *, virtualKey: VirtualKey, modifierMask: ModifierKey) -> None:
+        """
+        Change the configuration of the hotkey to be the new virtual key and
+        modifier mask.
+        """
+
+
 def mask(*keys: ModifierKey) -> ModifierKey:
     """
     Combine modifier keys into a mask.
@@ -52,8 +66,60 @@ def mask(*keys: ModifierKey) -> ModifierKey:
         x |= key
     return ModifierKey(x)
 
+
+class Configurator(Protocol):
+    """
+    A L{Configurator} can load and save the hotkey used to bind a particular
+    function.
+    """
+
+    def loadConfiguration(
+        self, fullyQualifiedName: str
+    ) -> tuple[VirtualKey, ModifierKey] | None:
+        """
+        For the function named by the given fully qualified name, determine
+        what virtual key and modifier key ought to be used.
+        """
+
+    def saveConfiguration(
+        self,
+        fullyQualifiedName: str,
+        virtualKey: VirtualKey,
+        modifierMask: ModifierKey,
+    ) -> None:
+        """
+        For the function named by the given fully qualified name, save a
+        user-supplied virtual key and modifier key.
+        """
+
+
+@overload
 def quickHotKey(
-    *, virtualKey: VirtualKey, modifierMask: ModifierKey, immediately: bool = True
+    *,
+    virtualKey: VirtualKey,
+    modifierMask: ModifierKey,
+    immediately: bool = True,
+) -> Callable[[CB], Registerable]:
+    ...
+
+
+@overload
+def quickHotKey(
+    *,
+    virtualKey: VirtualKey,
+    modifierMask: ModifierKey,
+    immediately: bool = True,
+    configurator: Configurator,
+) -> Callable[[CB], Configurable]:
+    ...
+
+
+def quickHotKey(
+    *,
+    virtualKey: VirtualKey,
+    modifierMask: ModifierKey,
+    immediately: bool = True,
+    configurator: Configurator | None = None,
 ) -> Callable[[CB], Registerable]:
     """
     Register a global hot key to run a decorated function.
@@ -61,15 +127,20 @@ def quickHotKey(
 
     def register(handler: CB) -> Registerable:
 
-        result, opaqueHotKeyRef = RegisterEventHotKey(
-            virtualKey, modifierMask, (0, 0), GetEventDispatcherTarget(), 0, None
-        )
+        vkeyToUse = virtualKey
+        maskToUse = modifierMask
+        fqpn = f"{handler.__module__}.{handler.__name__}"
+
+        opaqueHotKeyRef: object = None
         spec = EventTypeSpec(
             eventClass=kEventClassKeyboard, eventKind=kEventHotKeyPressed
         )
 
         def handlerShim() -> int:
-            handler()
+            try:
+                handler()
+            except:
+                print_exc()
             return 0
 
         callback = objc.callbackFor(InstallEventHandler)(handlerShim)
@@ -77,6 +148,7 @@ def quickHotKey(
 
         def unregister() -> None:
             nonlocal handlerRef
+            nonlocal opaqueHotKeyRef
             if handlerRef is not None:
                 UnregisterEventHotKey(opaqueHotKeyRef)
                 RemoveEventHandler(handlerRef)
@@ -84,9 +156,32 @@ def quickHotKey(
 
         def register() -> None:
             nonlocal handlerRef
-            handlerRef = InstallEventHandler(
+            nonlocal opaqueHotKeyRef
+            result, opaqueHotKeyRef = RegisterEventHotKey(
+                vkeyToUse, maskToUse, (0, 0), GetEventDispatcherTarget(), 0, None
+            )
+            result, handlerRef = InstallEventHandler(
                 GetEventDispatcherTarget(), callback, 1, [spec], None, None
             )
+
+        if configurator is not None:
+            cr = configurator
+            cn = cr.loadConfiguration(fqpn)
+            if cn is not None:
+                vkeyToUse, maskToUse = cn
+
+            def configure(*, virtualKey: VirtualKey, modifierMask: ModifierKey) -> None:
+                nonlocal vkeyToUse
+                nonlocal maskToUse
+
+                vkeyToUse, maskToUse = virtualKey, modifierMask
+
+                cr.saveConfiguration(fqpn, virtualKey, modifierMask)
+
+                unregister()
+                register()
+
+            handler.configure = configure  # type:ignore[attr-defined]
 
         handler.unregister = unregister  # type:ignore[attr-defined]
         handler.register = register  # type:ignore[attr-defined]
