@@ -24,7 +24,7 @@ ignore_missing_imports = true
 name = "quickmachotkey"
 description = "Bind a global hotkey, on macOS, in Python"
 readme = "README.rst"
-version = "2023.03.04"
+version = "2023.10.26"
 dependencies = [
     "pyobjc-core",
 ]
