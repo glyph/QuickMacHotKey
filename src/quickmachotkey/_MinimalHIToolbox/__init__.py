@@ -40,4 +40,10 @@ if TYPE_CHECKING:
         RegisterEventHotKey
     ) = (
         RemoveEventHandler
-    ) = UnregisterEventHotKey = kEventClassKeyboard = kEventHotKeyPressed = whatever
+    ) = (
+        UnregisterEventHotKey
+    ) = (
+        GetEventParameter
+    ) = (
+        typeEventHotKeyID
+    ) = kEventParamDirectObject = kEventClassKeyboard = kEventHotKeyPressed = whatever

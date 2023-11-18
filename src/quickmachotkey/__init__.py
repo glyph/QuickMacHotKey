@@ -3,7 +3,7 @@ ModernHotKey.py
 
 An example that shows how to use "Carbon" HotKeys from a PyObjC application.
 """
-from traceback import print_exc
+from traceback import print_exc as report_exception
 from typing import Callable, Protocol, overload
 
 import objc
@@ -11,16 +11,23 @@ import objc
 from ._MinimalHIToolbox import (
     EventTypeSpec,
     GetEventDispatcherTarget,
+    # GetEventClass,
+    # GetEventKind,
+    # GetCurrentEvent,
+    GetEventParameter,
     InstallEventHandler,
     RegisterEventHotKey,
-    RemoveEventHandler,
+    # RemoveEventHandler,
     UnregisterEventHotKey,
     kEventClassKeyboard,
     kEventHotKeyPressed,
+    kEventParamDirectObject,
+    typeEventHotKeyID,
 )
 from .constants import ModifierKey, VirtualKey
 
 CB = Callable[[], None]
+from struct import unpack
 
 
 class Registerable(Protocol):
@@ -93,6 +100,41 @@ class Configurator(Protocol):
         """
 
 
+_hotKeySpec = EventTypeSpec(
+    eventClass=kEventClassKeyboard, eventKind=kEventHotKeyPressed
+)
+
+hotKeyHandlers: dict[int, Callable[[], None]] = {}
+[_QMHK] = unpack("@I", b"QMHK")
+
+
+@objc.callbackFor(InstallEventHandler)
+def callback(callref, event, void) -> int:
+    try:
+        result, actualType, actualSize, relayedParam = GetEventParameter(
+            event,              # event
+            kEventParamDirectObject,  # param name
+            typeEventHotKeyID,  # inDesiredType
+            None,  # outActualType
+            8,  # inBufferSize
+            None,  # outActualSize
+            None,  # outBuffer
+        )
+        qmhk, hkid = unpack("@II", relayedParam)
+        assert qmhk == _QMHK
+        hotKeyHandlers[hkid]()
+    except:
+        report_exception()
+    return 0
+
+
+result, handlerRef = InstallEventHandler(
+    GetEventDispatcherTarget(), callback, 1, [_hotKeySpec], None, None
+)
+assert result == 0, "can't register hot keys if we can't install the event handler"
+registrationCounter = 0
+
+
 @overload
 def quickHotKey(
     *,
@@ -125,43 +167,30 @@ def quickHotKey(
     Register a global hot key to run a decorated function.
     """
 
-    def register(handler: CB) -> Registerable:
+    def makeRegisterable(handler: CB) -> Registerable:
+        global registrationCounter
+        registrationCounter += 1
+        myRegistration = registrationCounter
+
+        hotKeyHandlers[myRegistration] = handler
 
         vkeyToUse = virtualKey
         maskToUse = modifierMask
         fqpn = f"{handler.__module__}.{handler.__name__}"
 
         opaqueHotKeyRef: object = None
-        spec = EventTypeSpec(
-            eventClass=kEventClassKeyboard, eventKind=kEventHotKeyPressed
-        )
-
-        def handlerShim() -> int:
-            try:
-                handler()
-            except:
-                print_exc()
-            return 0
-
-        callback = objc.callbackFor(InstallEventHandler)(handlerShim)
-        handlerRef = None
 
         def unregister() -> None:
-            nonlocal handlerRef
             nonlocal opaqueHotKeyRef
-            if handlerRef is not None:
+            if opaqueHotKeyRef is not None:
                 UnregisterEventHotKey(opaqueHotKeyRef)
-                RemoveEventHandler(handlerRef)
-                handlerRef = None
+                opaqueHotKeyRef = None
 
         def register() -> None:
-            nonlocal handlerRef
             nonlocal opaqueHotKeyRef
+            hotKeyID = (_QMHK, myRegistration)
             result, opaqueHotKeyRef = RegisterEventHotKey(
-                vkeyToUse, maskToUse, (0, 0), GetEventDispatcherTarget(), 0, None
-            )
-            result, handlerRef = InstallEventHandler(
-                GetEventDispatcherTarget(), callback, 1, [spec], None, None
+                vkeyToUse, maskToUse, hotKeyID, GetEventDispatcherTarget(), 0, None
             )
 
         if configurator is not None:
@@ -189,4 +218,4 @@ def quickHotKey(
             register()
         return handler  # type:ignore[return-value]
 
-    return register
+    return makeRegisterable

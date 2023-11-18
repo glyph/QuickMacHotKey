@@ -5,8 +5,26 @@
   <opaque name='EventHotKeyRef' type='^{OpaqueEventHotKeyRef=}'  />
   <opaque name='EventTargetRef' type='^{OpaqueEventTargetRef=}' />
   <opaque name='EventHandlerRef' type='^{OpaqueEventHandlerRef=}' />
+  <opaque name='EventHandlerCallRef' type64='^{OpaqueEventHandlerCallRef=}'/>
+  <opaque name='EventRef' type='^{OpaqueEventRef=}' />
 
-  <struct name='EventTypeSpec' type='{EventTypeSpec=&quot;eventClass&quot;L&quot;eventKind&quot;L}' type64='{EventTypeSpec=&quot;eventClass&quot;I&quot;eventKind&quot;I}'/>
+  <struct name='EventTypeSpec'
+          type='{EventTypeSpec=&quot;eventClass&quot;L&quot;eventKind&quot;L}'
+          type64='{EventTypeSpec=&quot;eventClass&quot;I&quot;eventKind&quot;I}'
+          />
+  <struct name='EventHotKeyID'
+          type64='{EventHotKeyID=&quot;signature&quot;I&quot;id&quot;I}'
+          />
+
+  <!-- functions -->
+  <function name='GetEventClass'>
+    <arg type64='^{OpaqueEventRef=}'/>
+    <retval type64='I'/>
+  </function>
+  <function name='GetEventKind'>
+    <arg type64='^{OpaqueEventRef=}'/>
+    <retval type64='I'/>
+  </function>
   <function name='RegisterEventHotKey'>
     <arg type64='I' type='L'/>
     <arg type64='I' type='L'/>
@@ -29,6 +47,11 @@
   <function name='InstallEventHandler'>
     <arg type='^{OpaqueEventTargetRef=}'/>
     <arg function_pointer='true' type='^?'>
+
+      <arg type64='^{OpaqueEventHandlerCallRef=}'/>
+      <arg type64='^{OpaqueEventRef=}'/>
+      <arg type64='^v'/>
+
       <retval type='l' type64='i'/>
     </arg>
     <arg type='L' type64='Q'/>
@@ -42,6 +65,25 @@
     <retval type='l' type64='i'/>
   </function>
 
+  <enum name='kEventParamDirectObject' value64='757935405'/>
+
+  <function name='GetEventParameter'>
+    <arg type64='^{OpaqueEventRef=}'/> <!--event-->
+    <arg type64='I'/>                  <!--name-->
+    <arg type64='I'/>                  <!--desired type-->
+    <arg type_modifier='o' type64='^I'/>                 <!--(out) actual type-->
+    <arg type64='Q'/>                  <!--in buffer size-->
+    <arg type_modifier='o' type64='^Q'/>                 <!--out buffer size-->
+    <arg type_modifier='o' c_array_length_in_arg="4" type64='^v'/>                                   <!--out data-->
+    <retval type64='i'/>
+  </function>
+
+  <function name='GetCurrentEvent'>
+    <retval type64='^{OpaqueEventRef=}'/>
+  </function>
+
+  <!-- enums -->
+  <enum name='typeEventHotKeyID' value64='1751869796'/>
 
   <enum name='kEventClassKeyboard' value='1801812322'/>
 

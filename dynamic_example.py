@@ -17,7 +17,7 @@ config = JSONFileConfigurator(Path("whatkey.json"))
     configurator=config,
 )
 def handler() -> None:
-    print("handled, switching to K")
+    print("handled, switching to ⌘⇧K")
     handler.configure(virtualKey=kVK_ANSI_K, modifierMask=mask(cmdKey, shiftKey))
 
 
