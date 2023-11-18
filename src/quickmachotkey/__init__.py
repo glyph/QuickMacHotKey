@@ -3,6 +3,7 @@ ModernHotKey.py
 
 An example that shows how to use "Carbon" HotKeys from a PyObjC application.
 """
+import functools
 from traceback import print_exc
 from typing import Callable, Protocol, overload
 
@@ -124,7 +125,8 @@ def quickHotKey(
     """
     Register a global hot key to run a decorated function.
     """
-
+    
+    @functools.wraps(virtualKey)
     def register(handler: CB) -> Registerable:
 
         vkeyToUse = virtualKey
