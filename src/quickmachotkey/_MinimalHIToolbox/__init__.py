@@ -21,26 +21,31 @@ I{archive}, even if it's not present in the current active documentation:
 https://developer.apple.com/library/archive/documentation/Carbon/Conceptual/Carbon_Event_Manager/Tasks/CarbonEventsTasks.html
 """
 
-import objc as _objc  # type:ignore[import]
-from warnings import catch_warnings as _catch
 
-with _catch():
-    # There's a deprecation warning on this asking me to use the "new metadata
-    # system", but this system is undocumented and given issues like
-    # https://github.com/ronaldoussoren/objective.metadata/issues/6 not really
-    # ready for third-party use yet, so we're just going to squash the warning
-    # for now.
+def _setup() -> None:
+    import objc 
 
-    __bundle__ = _objc.initFrameworkWrapper(
-        __name__,
+    from . import _metadata
+
+    dir_func, getattr_func = objc.createFrameworkDirAndGetattr(
+        name="Foundation",
         frameworkIdentifier="com.apple.HIToolbox",
-        frameworkPath=_objc.pathForFramework(
+        frameworkPath=objc.pathForFramework(
             "/System/Library/Frameworks/"
             "Carbon.framework/Versions/Current/Frameworks/"
             "HIToolbox.framework"
         ),
-        globals=globals(),
+        globals_dict=globals(),
+        inline_list=None,
+        parents=(
+        ),
+        metadict=_metadata.__dict__,
     )
+
+    globals()["__dir__"] = dir_func
+    globals()["__getattr__"] = getattr_func
+
+_setup()
 
 from typing import TYPE_CHECKING, Any
 
