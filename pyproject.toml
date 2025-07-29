@@ -27,6 +27,7 @@ readme = "README.rst"
 version = "2025.07.28"
 dependencies = [
     "pyobjc-core",
+    "pyobjc-framework-Cocoa",
 ]
 
 [project.urls]
