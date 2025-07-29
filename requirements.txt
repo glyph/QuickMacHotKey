@@ -5,4 +5,8 @@
 #    pip-compile --no-emit-index-url --strip-extras
 #
 pyobjc-core==11.1
+    # via
+    #   pyobjc-framework-cocoa
+    #   quickmachotkey (pyproject.toml)
+pyobjc-framework-cocoa==11.1
     # via quickmachotkey (pyproject.toml)
