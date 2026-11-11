@@ -28,3 +28,8 @@ Simple example:
        print("type ⌘⌃⌥X with any application focused")
        NSApplication.sharedApplication()
        AppHelper.runEventLoop()
+
+AI Policy
+---------
+
+QuickMacHotKey follows the `Twisted AI Policy <https://docs.twisted.org/en/latest/development/ai-policy.html>`_. This means this project does not allow the inclusion of the outputs of generative AI tools.
